@@ -1,7 +1,8 @@
 #!/bin/bash
 # temp.sh: Script para compilar GTK+ 3 e YAD no Termux usando JHBuild.
 
-# --- Fase 1: Configuração do Ambiente e Instalação de Dependências ---
+set -e
+
 echo "INFO: Configurando o ambiente e instalando dependências base..."
 pkg update -y && pkg upgrade -y
 pkg install -y build-essential git python autoconf automake libtool \
@@ -11,17 +12,14 @@ pkg install -y build-essential git python autoconf automake libtool \
 
 | { echo "ERRO: Falha ao instalar dependências base."; exit 1; }
 
-# Define o diretório de compilação para isolamento
 export JHBUILD_PREFIX="$HOME/jhbuild"
 mkdir -p "$JHBUILD_PREFIX"
 
-# Configura variáveis de ambiente cruciais para a compilação
 export CFLAGS="-I$PREFIX/include -I$JHBUILD_PREFIX/include"
 export LDFLAGS="-L$PREFIX/lib -L$JHBUILD_PREFIX/lib"
 export PKG_CONFIG_PATH="$PREFIX/lib/pkgconfig:$PREFIX/share/pkgconfig:$JHBUILD_PREFIX/lib/pkgconfig:$JHBUILD_PREFIX/share/pkgconfig"
 export LD_LIBRARY_PATH="$PREFIX/lib:$JHBUILD_PREFIX/lib"
 
-# --- Fase 2: Bootstrap do JHBuild ---
 echo "INFO: Baixando e configurando o JHBuild..."
 if [! -d "jhbuild" ]; then
     git clone https://gitlab.gnome.org/GNOME/jhbuild.git |
@@ -32,28 +30,26 @@ cd jhbuild
 ./autogen.sh --prefix="$PREFIX" |
 
 | { echo "ERRO: Falha no autogen.sh do JHBuild."; exit 1; }
-make && make install
+make |
+
+| { echo "ERRO: Falha ao compilar o JHBuild."; exit 1; }
+make install |
+
+| { echo "ERRO: Falha ao instalar o JHBuild."; exit 1; }
 cd..
 
-# Cria um arquivo de configuração mínimo para o JHBuild
 cat > ~/.jhbuildrc << EOF
-# Arquivo de configuração do JHBuild para o Termux
 prefix = '$JHBUILD_PREFIX'
 checkoutroot = '~/jhbuild/src'
-moduleset = 'gnome-apps-3.38' # Usar um moduleset estável
-# Adicionar quaisquer configurações adicionais necessárias
+moduleset = 'gnome-apps-3.38'
 EOF
 
-# --- Fase 3: Compilação do GTK+ ---
 echo "INFO: Iniciando a compilação do GTK+ com JHBuild. Isso pode levar muito tempo."
-# Limpa builds anteriores e compila o módulo 'gtk+'
-# A flag --nodeps assume que as dependências base do sistema foram instaladas via pkg
 jhbuild build --force --clean --nodeps gtk+ |
 
 | { echo "ERRO: A compilação do GTK+ falhou."; exit 1; }
 echo "SUCESSO: GTK+ compilado com sucesso em $JHBUILD_PREFIX"
 
-# --- Fase 4: Compilação do YAD ---
 echo "INFO: Baixando e compilando o YAD..."
 YAD_VERSION="13.0"
 if [! -d "yad" ]; then
@@ -64,7 +60,6 @@ fi
 cd yad
 git checkout $YAD_VERSION
 
-# Compila o YAD, apontando para o GTK+ recém-compilado
 ./autogen.sh
 ./configure --prefix="$JHBUILD_PREFIX" |
 
