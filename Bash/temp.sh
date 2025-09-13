@@ -2,7 +2,7 @@
 set -e
 pkg update -y && pkg upgrade -y
 pkg install -y build-essential git python autoconf automake libtool \
-    bison gettext pkg-config ninja meson libffi-dev libxml2-dev \
+    bison gettext pkg-config libffi-dev libxml2-dev \
     libjpeg-turbo-dev libpng-dev libtiff-dev gobject-introspection \
     gtk-doc docbook-xsl-legacy
 
