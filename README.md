@@ -46,10 +46,10 @@ Este script é o resultado de um processo detalhado de depuração, resolvendo c
 **Requisitos**
 
 
-1.  **Termux:** O aplicativo Termux instalado no seu dispositivo Android. É altamente recomendável usar a versão do F-Droid.
+1.  **[Termux:](https://github.com/termux/termux-app)** O aplicativo Termux instalado no seu dispositivo Android. É altamente recomendável usar a versão do [Github oficial](https://github.com/termux/termux-app).
 
 
-2.  **Termux:X11 (Opcional, para teste):** Para testar a aplicação gráfica (yad) compilada, você precisará do aplicativo Termux:X11.
+2.  **[Termux:X11](https://github.com/termux/termux-x11):** Para testar a aplicação gráfica (yad) compilada, você precisará do aplicativo Termux:X11.
 
 
 3.  **Conexão com a Internet:** Para baixar os pacotes e o código-fonte.
