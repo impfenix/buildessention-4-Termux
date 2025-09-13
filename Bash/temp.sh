@@ -1,41 +1,80 @@
-#!/data/data/com.termux/files/usr/bin/bash
+#!/bin/bash
+# temp.sh: Script para compilar GTK+ 3 e YAD no Termux usando JHBuild.
 
-# Encerra o script imediatamente se qualquer comando falhar.
-# Isso previne erros em cascata e comportamentos inesperados.
-set -e
+# --- Fase 1: Configuração do Ambiente e Instalação de Dependências ---
+echo "INFO: Configurando o ambiente e instalando dependências base..."
+pkg update -y && pkg upgrade -y
+pkg install -y build-essential git python autoconf automake libtool \
+    bison gettext pkg-config ninja meson libffi-dev libxml2-dev \
+    libjpeg-turbo-dev libpng-dev libtiff-dev gobject-introspection \
+    gtk-doc docbook-xsl-legacy |
 
-# Atualiza os repositórios de pacotes e instala todas as dependências necessárias
-# para a compilação do YAD.
-# - build-essential: Compiladores C/C++ e ferramentas essenciais.
-# - meson: O sistema de compilação usado pelo YAD.
-# - ninja: O backend de compilação de alta velocidade que o Meson utiliza.
-# - gettext: Ferramentas para internacionalização (i18n), uma dependência do YAD.
-# - libgtk-3-dev: Arquivos de desenvolvimento para a biblioteca GTK3, da qual a GUI do YAD depende.
-pkg install -y gettext libgtk-3-dev
+| { echo "ERRO: Falha ao instalar dependências base."; exit 1; }
 
-# Garante que o script opere a partir do diretório home do Termux,
-# um ponto de partida conhecido e seguro.
-cd /data/data/com.termux/files/home
+# Define o diretório de compilação para isolamento
+export JHBUILD_PREFIX="$HOME/jhbuild"
+mkdir -p "$JHBUILD_PREFIX"
 
-# Baixa o código-fonte do YAD versão 14.1 do repositório oficial no GitHub.
-curl -LO https://github.com/v1cont/yad/releases/download/v14.1/yad-14.1.tar.xz
+# Configura variáveis de ambiente cruciais para a compilação
+export CFLAGS="-I$PREFIX/include -I$JHBUILD_PREFIX/include"
+export LDFLAGS="-L$PREFIX/lib -L$JHBUILD_PREFIX/lib"
+export PKG_CONFIG_PATH="$PREFIX/lib/pkgconfig:$PREFIX/share/pkgconfig:$JHBUILD_PREFIX/lib/pkgconfig:$JHBUILD_PREFIX/share/pkgconfig"
+export LD_LIBRARY_PATH="$PREFIX/lib:$JHBUILD_PREFIX/lib"
 
-# Extrai o conteúdo do arquivo tarball. O comando 'tar' criará um
-# diretório chamado 'yad-14.1'.
-tar -xf yad-14.1.tar.xz
+# --- Fase 2: Bootstrap do JHBuild ---
+echo "INFO: Baixando e configurando o JHBuild..."
+if [! -d "jhbuild" ]; then
+    git clone https://gitlab.gnome.org/GNOME/jhbuild.git |
 
-# *** ESTE É O PASSO CRÍTICO QUE FALTAVA ***
-# Muda o diretório de trabalho para o diretório do código-fonte recém-extraído.
-# Todos os comandos subsequentes serão executados neste contexto.
-cd yad-14.1
+| { echo "ERRO: Falha ao clonar o repositório do JHBuild."; exit 1; }
+fi
+cd jhbuild
+./autogen.sh --prefix="$PREFIX" |
 
-# Fase de configuração do Meson. Cria um subdiretório 'build' para manter
-# os arquivos de compilação separados do código-fonte.
-meson setup build
+| { echo "ERRO: Falha no autogen.sh do JHBuild."; exit 1; }
+make && make install
+cd..
 
-# Fase de compilação. Invoca o Ninja para compilar o projeto dentro do
-# diretório 'build'.
-ninja -C build
+# Cria um arquivo de configuração mínimo para o JHBuild
+cat > ~/.jhbuildrc << EOF
+# Arquivo de configuração do JHBuild para o Termux
+prefix = '$JHBUILD_PREFIX'
+checkoutroot = '~/jhbuild/src'
+moduleset = 'gnome-apps-3.38' # Usar um moduleset estável
+# Adicionar quaisquer configurações adicionais necessárias
+EOF
 
-# Mensagem de confirmação para o usuário indicando que o processo foi bem-sucedido.
-echo "Compilação do YAD 14.1 concluída com sucesso."
+# --- Fase 3: Compilação do GTK+ ---
+echo "INFO: Iniciando a compilação do GTK+ com JHBuild. Isso pode levar muito tempo."
+# Limpa builds anteriores e compila o módulo 'gtk+'
+# A flag --nodeps assume que as dependências base do sistema foram instaladas via pkg
+jhbuild build --force --clean --nodeps gtk+ |
+
+| { echo "ERRO: A compilação do GTK+ falhou."; exit 1; }
+echo "SUCESSO: GTK+ compilado com sucesso em $JHBUILD_PREFIX"
+
+# --- Fase 4: Compilação do YAD ---
+echo "INFO: Baixando e compilando o YAD..."
+YAD_VERSION="13.0"
+if [! -d "yad" ]; then
+    git clone https://github.com/v1cont/yad.git |
+
+| { echo "ERRO: Falha ao clonar o repositório do YAD."; exit 1; }
+fi
+cd yad
+git checkout $YAD_VERSION
+
+# Compila o YAD, apontando para o GTK+ recém-compilado
+./autogen.sh
+./configure --prefix="$JHBUILD_PREFIX" |
+
+| { echo "ERRO: Falha ao configurar o YAD."; exit 1; }
+make |
+
+| { echo "ERRO: Falha ao compilar o YAD."; exit 1; }
+make install |
+
+| { echo "ERRO: Falha ao instalar o YAD."; exit 1; }
+echo "SUCESSO: YAD compilado e instalado em $JHBUILD_PREFIX"
+
+echo "INFO: Processo de compilação concluído."
