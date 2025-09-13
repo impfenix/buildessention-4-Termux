@@ -43,65 +43,56 @@ Este script é o resultado de um processo detalhado de depuração, resolvendo c
 *   **Teste de Validação:** Baixa, compila e instala o yad v14.1 para confirmar que o ambiente de desenvolvimento está funcionando corretamente.
 
 
-**Requisitos**
+### **Requisitos**
 
 
-1.  **[Termux:](https://github.com/termux/termux-app)** O aplicativo Termux instalado no seu dispositivo Android. É altamente recomendável usar a versão do [Github oficial](https://github.com/termux/termux-app).
+#### 1.  **[Termux:](https://github.com/termux/termux-app)** O aplicativo Termux instalado no seu dispositivo Android. É altamente recomendável usar a versão do [Github oficial](https://github.com/termux/termux-app).
 
 
-2.  **[Termux:X11](https://github.com/termux/termux-x11):** Para testar a aplicação gráfica (yad) compilada, você precisará do aplicativo Termux:X11.
+#### 2.  **[Termux:X11](https://github.com/termux/termux-x11):** Para testar a aplicação gráfica (yad) compilada, você precisará do aplicativo Termux:X11.
 
 
-3.  **Conexão com a Internet:** Para baixar os pacotes e o código-fonte.
+#### 3.  **Conexão com a Internet:** Para baixar os pacotes e o código-fonte.
 
 
-**Como Usar**
+### **Como Usar**
 
 
-1.  Abra o Termux e instale o git:
+* **1- Abra o Termux e instale o git:**
 
-    ```bash
-
-    pkg install git
-
+    ```
+    pkg install git -y
     ```
 
 
-2.  Clone este repositório:
+* **2- Clone este repositório:**
 
     ```
-
-    git clone <URL_DO_SEU_REPOSITORIO>
-
-    ```
-
-
-3.  Navegue até o diretório do script:
-
-    ```
-
-    cd <NOME_DO_REPOSITORIO>
-
+    git clone https://github.com/impfenix/buildessention-4-Termux.git
     ```
 
 
-4.  Dê permissão de execução ao script:
+* **3- Navegue até o diretório do script:**
 
     ```
+    cd buildessention-4-Termux/Bash
+    ```
 
+
+* **4- Dê permissão de execução ao script:**
+
+    ```
     chmod +x build_essential_termux.sh
-
     ```
 
 
-5.  Execute o script:
+* **5- Execute o script:**
 
 
     ```
-
-    ./build_essential_termux.sh
-
-    ```
+    ./build_essential_termux.sh
+    ```
+    
 
     O script cuidará de todo o processo. Ele pode levar vários minutos, dependendo da velocidade do seu dispositivo e da sua conexão com a internet.
 
@@ -118,9 +109,7 @@ Após a conclusão bem-sucedida do script, você pode verificar se o ambiente es
 2.  Volte para o Termux e execute o seguinte comando:
 
     ```
-
     termux-x11 :0 -xstartup "yad --title='Sucesso!' --text='Ambiente de desenvolvimento configurado!' --button=OK"
-
     ```
 
     Uma janela de diálogo gráfica deve aparecer na tela do Termux:X11, confirmando que a compilação e a instalação foram bem-sucedidas.
