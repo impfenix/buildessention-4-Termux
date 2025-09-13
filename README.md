@@ -110,7 +110,7 @@ Após a conclusão bem-sucedida do script, você pode verificar se o ambiente es
 
     ```
     termux-x11 :0 -xstartup "yad --title='Sucesso!' --text='Ambiente de desenvolvimento configurado!' --button=OK"
-    ```
+                                                                                                                   ```
 
     Uma janela de diálogo gráfica deve aparecer na tela do Termux:X11, confirmando que a compilação e a instalação foram bem-sucedidas.
 
